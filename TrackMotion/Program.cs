@@ -44,16 +44,44 @@ namespace TrackMotion
 			result = Interop.tobii_gaze_point_subscribe(deviceContext, callback);
 			Debug.Assert(result == tobii_error_t.TOBII_ERROR_NO_ERROR);
 
-			// This sample will collect 1000 gaze points
-			for (int i = 0; i < 1000; i++)
-			{
-				// Optionally block this thread until data is available. Especially useful if running in a separate thread.
-				Interop.tobii_wait_for_callbacks( apiContext, new[] { deviceContext } );
-				Debug.Assert(result == tobii_error_t.TOBII_ERROR_NO_ERROR || result == tobii_error_t.TOBII_ERROR_TIMED_OUT);
+			// ################################################################
+			ConsoleKeyInfo cki;
 
-				// Process callbacks on this thread if data is available
-				Interop.tobii_device_process_callbacks(deviceContext);
-				Debug.Assert(result == tobii_error_t.TOBII_ERROR_NO_ERROR);
+			while( true )
+			{
+				// ----------------------------------------------------------------
+				// [Apps]キーが押されるまで待機。
+				Console.WriteLine("--------------------------------------------------------------------------------");
+				Console.WriteLine("Press [Apps] to start/stop tracking. Press [Esc] to quit.");
+				do
+				{
+					cki = Console.ReadKey(true);
+				}
+				while ( ( cki.Key != ConsoleKey.Applications ) && (cki.Key != ConsoleKey.Escape) );
+
+				// quit
+				if (cki.Key == ConsoleKey.Escape) break;
+
+				// ----------------------------------------------------------------
+				// [Apps]キーが押されるまでトラッキング
+				Console.WriteLine("--------------------------------------------------------------------------------");
+				Console.WriteLine("Then press [Apps] to stop tracking. Press [Esc] to quit.");
+				do
+				{
+					while (!Console.KeyAvailable)
+					{
+						// Optionally block this thread until data is available. Especially useful if running in a separate thread.
+						Interop.tobii_wait_for_callbacks(apiContext, new[] { deviceContext });
+						Debug.Assert(result == tobii_error_t.TOBII_ERROR_NO_ERROR || result == tobii_error_t.TOBII_ERROR_TIMED_OUT);
+
+						// Process callbacks on this thread if data is available
+						Interop.tobii_device_process_callbacks(deviceContext);
+						Debug.Assert(result == tobii_error_t.TOBII_ERROR_NO_ERROR);
+					}
+					cki = Console.ReadKey(true);
+				} while ((cki.Key != ConsoleKey.Applications) && (cki.Key != ConsoleKey.Escape));
+
+				if (cki.Key == ConsoleKey.Escape) break;
 			}
 
 			// Cleanup
