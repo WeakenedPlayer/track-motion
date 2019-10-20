@@ -9,11 +9,16 @@ namespace TrackMotion
 {
 	public static class Program
 	{
+		// 開始時刻[tick]
+		// tick = 100ns
+		static long start = DateTime.Now.ToBinary();
+
 		public static void OnGazePoint(ref tobii_gaze_point_t gazePoint )
 		{
 			if (gazePoint.validity == tobii_validity_t.TOBII_VALIDITY_VALID)
 			{
-				Console.WriteLine($"Gaze point: {gazePoint.position.x}, {gazePoint.position.y}");
+				long elapsed = DateTime.Now.ToBinary() - start;
+				Console.WriteLine($"{elapsed}: {gazePoint.position.x}, {gazePoint.position.y}");
 			}
 		}
 		public static tobii_gaze_point_callback_t callback = OnGazePoint;
@@ -49,23 +54,27 @@ namespace TrackMotion
 
 			while( true )
 			{
-				// ----------------------------------------------------------------
+				// ------------------------------------------------------------
 				// [Apps]キーが押されるまで待機。
 				Console.WriteLine("--------------------------------------------------------------------------------");
 				Console.WriteLine("Press [Apps] to start/stop tracking. Press [Esc] to quit.");
+
+				// start更新
+				start = DateTime.Now.ToBinary();
+
 				do
 				{
 					cki = Console.ReadKey(true);
 				}
 				while ( ( cki.Key != ConsoleKey.Applications ) && (cki.Key != ConsoleKey.Escape) );
-
 				// quit
 				if (cki.Key == ConsoleKey.Escape) break;
 
-				// ----------------------------------------------------------------
+				// ------------------------------------------------------------
 				// [Apps]キーが押されるまでトラッキング
 				Console.WriteLine("--------------------------------------------------------------------------------");
 				Console.WriteLine("Then press [Apps] to stop tracking. Press [Esc] to quit.");
+
 				do
 				{
 					while (!Console.KeyAvailable)
@@ -83,7 +92,7 @@ namespace TrackMotion
 
 				if (cki.Key == ConsoleKey.Escape) break;
 			}
-
+			// ################################################################
 			// Cleanup
 			result = Interop.tobii_gaze_point_unsubscribe(deviceContext);
 			Debug.Assert(result == tobii_error_t.TOBII_ERROR_NO_ERROR);
